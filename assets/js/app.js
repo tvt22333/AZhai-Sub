@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('form').forEach(f=>f.addEventListener('submit',()=>{const b=f.querySelector('button');if(b){b.disabled=true;b.textContent='处理中…'}})));
