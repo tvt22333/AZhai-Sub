@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主机： localhost
--- 生成日期： 2026-09-11 22:22:22
+-- 生成日期： 2026-09-20 22:22:22
 -- 服务器版本： 8.4.10
 -- PHP 版本： 8.4.23
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- 数据库： `azhai_sub`
+-- 数据库： `sub_4_cdn_vg`
 --
 
 -- --------------------------------------------------------
@@ -271,13 +271,6 @@ CREATE TABLE `email_verifications` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- 转存表中的数据 `email_verifications`
---
-
-INSERT INTO `email_verifications` (`id`, `user_id`, `email`, `token_hash`, `expires_at`, `used_at`, `created_at`) VALUES
-(15, 18, '1234qwer@163.com', 'be37aca0edb85fe5dbf9d226f32a819f6b6ddfa23cdf5f7437b301d7e44b91fa', '2026-09-12 11:40:21', NULL, '2026-09-12 11:10:21');
-
 -- --------------------------------------------------------
 
 --
@@ -310,13 +303,6 @@ CREATE TABLE `password_resets` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- 转存表中的数据 `password_resets`
---
-
-INSERT INTO `password_resets` (`id`, `user_id`, `token_hash`, `expires_at`, `used_at`, `created_at`) VALUES
-(1, 12, 'a0ec5a27b6fcdcb43e664fc6ad468277def0d9240b0ec3df9cc670273ee98270', '2026-09-08 18:20:39', '2026-09-08 17:51:07', '2026-09-08 17:50:39');
-
 -- --------------------------------------------------------
 
 --
@@ -327,6 +313,47 @@ CREATE TABLE `settings` (
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `site_settings`
+--
+
+CREATE TABLE `site_settings` (
+  `id` int UNSIGNED NOT NULL,
+  `setting_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `setting_value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- 转存表中的数据 `site_settings`
+--
+
+INSERT INTO `site_settings` (`id`, `setting_key`, `setting_value`, `updated_at`) VALUES
+(1, 'site_name', 'AZhai Sub', '2026-09-18 08:00:05'),
+(2, 'site_name_cn', '阿宅二级域名', '2026-09-18 07:34:37'),
+(3, 'site_description', '阿宅二级域名分发平台', '2026-09-18 07:17:18'),
+(4, 'site_keywords', 'AZhai Sub,阿宅二级域名,二级域名,DNS', '2026-09-18 07:17:18'),
+(5, 'site_url', 'https://sub.azhai.de', '2026-09-18 07:17:18'),
+(6, 'site_logo', '', '2026-09-18 07:17:18'),
+(7, 'site_favicon', '', '2026-09-18 07:17:18'),
+(8, 'site_author', 'AZhai', '2026-09-18 07:17:18'),
+(9, 'site_copyright', '© AZhai Sub', '2026-09-18 07:34:37'),
+(10, 'site_language', 'zh-CN', '2026-09-18 08:00:55'),
+(11, 'site_timezone', 'Asia/Shanghai', '2026-09-18 07:17:18'),
+(12, 'home_title', '阿宅二级域名', '2026-09-18 07:17:18'),
+(13, 'home_description', '免费、简单、快速的二级域名分发平台', '2026-09-18 07:35:18'),
+(14, 'home_notice', '1234', '2026-09-18 07:22:35'),
+(15, 'home_notice_enabled', '0', '2026-09-18 07:35:18'),
+(16, 'register_enabled', '1', '2026-09-18 07:17:18'),
+(17, 'maintenance_mode', '0', '2026-09-18 07:48:33'),
+(18, 'maintenance_message', '网站正在维护中，请稍后再回来', '2026-09-18 07:17:18'),
+(19, 'log_retention_days', '30', '2026-09-19 07:02:02'),
+(20, 'domain_apply_enabled', '1', '2026-09-18 07:36:06'),
+(21, 'domain_review_enabled', '1', '2026-09-18 07:17:18'),
+(22, 'user_domain_limit', '3', '2026-09-18 07:52:10');
 
 -- --------------------------------------------------------
 
@@ -515,6 +542,13 @@ ALTER TABLE `settings`
   ADD PRIMARY KEY (`name`);
 
 --
+-- 表的索引 `site_settings`
+--
+ALTER TABLE `site_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_setting_key` (`setting_key`);
+
+--
 -- 表的索引 `txt_verification_requests`
 --
 ALTER TABLE `txt_verification_requests`
@@ -569,13 +603,13 @@ ALTER TABLE `blacklist`
 -- 使用表AUTO_INCREMENT `dns_providers`
 --
 ALTER TABLE `dns_providers`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `dns_provider_domains`
 --
 ALTER TABLE `dns_provider_domains`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `dns_sync_logs`
@@ -587,25 +621,25 @@ ALTER TABLE `dns_sync_logs`
 -- 使用表AUTO_INCREMENT `domains`
 --
 ALTER TABLE `domains`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `domain_applications`
 --
 ALTER TABLE `domain_applications`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `domain_records`
 --
 ALTER TABLE `domain_records`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `email_logs`
 --
 ALTER TABLE `email_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `email_templates`
@@ -617,31 +651,37 @@ ALTER TABLE `email_templates`
 -- 使用表AUTO_INCREMENT `email_verifications`
 --
 ALTER TABLE `email_verifications`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `operation_logs`
 --
 ALTER TABLE `operation_logs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- 使用表AUTO_INCREMENT `site_settings`
+--
+ALTER TABLE `site_settings`
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=547;
 
 --
 -- 使用表AUTO_INCREMENT `txt_verification_requests`
 --
 ALTER TABLE `txt_verification_requests`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- 使用表AUTO_INCREMENT `user_oauth_accounts`
