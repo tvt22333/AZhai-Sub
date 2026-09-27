@@ -36,7 +36,9 @@ if (is_file($updateSettingsFile)) {
         }
     }
 }
-
+/**
+ * 格式化文件大小
+ */
 if (!function_exists('update_format_size')) {
     function update_format_size(int $bytes): string
     {
@@ -175,6 +177,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $config = require __DIR__ .
                         '/../config.php';
 
+                    $checked = true;
+                    $result = update_check();
+
+                    if (
+                        !is_array($result)
+                        || empty($result['success'])
+                    ) {
+                        $result = [
+                            'success' => true,
+                            'available' => false,
+                            'message' => '当前步骤升级成功'
+                        ];
+                    }
+
                 } else {
 
                     $error = is_array($installResult)
@@ -234,8 +250,7 @@ if (
 $release = [];
 
 if (
-    !$installed
-    && $checked
+    $checked
     && is_array($result)
     && !empty($result['success'])
     && !empty($result['available'])
@@ -269,7 +284,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
             <p>
                 从阿宅升级中心检查并安装
-                AZhai Sub 的最新版本。
+                AZhai Sub 的最新版本
             </p>
 
         </div>
@@ -365,7 +380,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
             <p>
                 请先在 config.php 中填写
-                AZhai Sub 的升级中心 API Token。
+                AZhai Sub 的升级中心 API Token
             </p>
 
         </div>
@@ -389,8 +404,7 @@ require __DIR__ . '/../includes/admin_header.php';
     <?php endif; ?>
 
     <?php if (
-        !$installed
-        && $checked
+        $checked
         && is_array($result)
         && !empty($result['success'])
         && $error === ''
@@ -407,7 +421,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 <p>
                     当前版本
                     <?= e($currentVersion) ?>
-                    暂无可用更新。
+                    暂无可用更新
                 </p>
 
             </div>
@@ -421,7 +435,7 @@ require __DIR__ . '/../includes/admin_header.php';
                     <div>
 
                         <span class="update-badge">
-                            有新版本
+                            <?= $installed ? '下一步升级' : '有新版本' ?>
                         </span>
 
                         <h2>
@@ -520,6 +534,44 @@ require __DIR__ . '/../includes/admin_header.php';
 
                     <?php if (
                         !empty(
+                            $release['min_from_version']
+                            ?? ''
+                        )
+                    ): ?>
+
+                        <span>
+                            最低支持来源版本 ≥
+                            <?= e(
+                                (string) $release['min_from_version']
+                            ) ?>
+                        </span>
+
+                    <?php endif; ?>
+
+                    <?php if (
+                        is_array($result)
+                        && !empty($result['step_count'])
+                    ): ?>
+
+                        <span>
+                            顺序升级第
+                            <?= e(
+                                (string) (
+                                    $result['current_step']
+                                    ?? 1
+                                )
+                            ) ?>
+                            /
+                            <?= e(
+                                (string) $result['step_count']
+                            ) ?>
+                            步
+                        </span>
+
+                    <?php endif; ?>
+
+                    <?php if (
+                        !empty(
                             $release['min_php_version']
                             ?? ''
                         )
@@ -591,11 +643,23 @@ require __DIR__ . '/../includes/admin_header.php';
                 <div class="update-protection">
 
                     <span>
-                        🔒 config.php 不会被覆盖
+                        🔒 config.php 不会被升级包覆盖
                     </span>
 
                     <span>
-                        仅更新服务器现有 config.php 的 version
+                        🔒 .user.ini 不会被覆盖
+                    </span>
+
+                    <span>
+                        🔒 admin/update.php 不会被覆盖
+                    </span>
+
+                    <span>
+                        🔒 includes/updater.php 不会被覆盖
+                    </span>
+
+                    <span>
+                        版本成功安装后只更新 config.php 中的 version
                     </span>
 
                 </div>
@@ -703,7 +767,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 </label>
 
                 <p>
-                    开启后，进入系统更新页面时会自动检测新版本，但不会自动安装更新。
+                    开启后，进入系统更新页面时会自动检测新版本，但不会自动安装更新
                 </p>
 
             </form>
