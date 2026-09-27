@@ -368,54 +368,37 @@ function update_check(): array
         return [
             'success' => false,
             'available' => false,
-            'message' =>
-                '在线升级未配置'
+            'message' => '在线升级未配置'
         ];
     }
 
-    $currentVersion =
-        update_current_version();
+    $currentVersion = update_current_version();
+    $product = update_product();
+    $channel = update_channel();
+    $baseUrl = update_check_url();
 
-    $product =
-        update_product();
-
-    $channel =
-        update_channel();
-
-    $baseUrl =
-        update_check_url();
-
-    $query =
-        http_build_query(
-            [
-                'product' => $product,
-                'version' => $currentVersion,
-                'channel' => $channel
-            ]
-        );
+    $query = http_build_query([
+        'product' => $product,
+        'version' => $currentVersion,
+        'channel' => $channel
+    ]);
 
     $url =
         $baseUrl
         . (
-            str_contains(
-                $baseUrl,
-                '?'
-            )
+            str_contains($baseUrl, '?')
                 ? '&'
                 : '?'
         )
         . $query;
 
-    $result =
-        update_http_get(
-            $url,
-            update_token(),
-            true
-        );
+    $result = update_http_get(
+        $url,
+        update_token(),
+        true
+    );
 
-    if (
-        !$result['success']
-    ) {
+    if (!$result['success']) {
         update_log(
             '检查更新失败: '
             . $result['error']
@@ -424,23 +407,20 @@ function update_check(): array
         return [
             'success' => false,
             'available' => false,
-            'message' =>
-                $result['error']
+            'message' => $result['error']
         ];
     }
 
-    $data =
-        json_decode(
-            $result['body'],
-            true
-        );
+    $data = json_decode(
+        $result['body'],
+        true
+    );
 
     if (!is_array($data)) {
         return [
             'success' => false,
             'available' => false,
-            'message' =>
-                '升级中心返回的数据无效'
+            'message' => '升级中心返回的数据无效'
         ];
     }
 
@@ -451,11 +431,10 @@ function update_check(): array
         return [
             'success' => false,
             'available' => false,
-            'message' =>
-                (string) (
-                    $data['message']
-                    ?? '检查更新失败'
-                ),
+            'message' => (string) (
+                $data['message']
+                ?? '检查更新失败'
+            ),
             'data' => $data
         ];
     }
@@ -464,59 +443,59 @@ function update_check(): array
 
     if (
         isset($data['release'])
-        && is_array(
-            $data['release']
-        )
+        && is_array($data['release'])
     ) {
-        $release =
-            $data['release'];
+        $release = $data['release'];
     } elseif (
         isset($data['data'])
-        && is_array(
-            $data['data']
-        )
-        && isset(
-            $data['data']['release']
-        )
-        && is_array(
-            $data['data']['release']
-        )
+        && is_array($data['data'])
+        && isset($data['data']['release'])
+        && is_array($data['data']['release'])
     ) {
-        $release =
-            $data['data']['release'];
+        $release = $data['data']['release'];
+    }
+
+    $targetVersion = '';
+
+    if (is_array($release)) {
+        $targetVersion = trim(
+            (string) ($release['version'] ?? '')
+        );
+    }
+
+    $steps = [];
+
+    if (
+        isset($data['steps'])
+        && is_array($data['steps'])
+    ) {
+        $steps = $data['steps'];
     }
 
     if (
         !is_array($release)
-        || empty($release['version'])
+        || $targetVersion === ''
     ) {
         return [
             'success' => true,
             'available' => false,
-            'message' =>
-                '当前已是最新版本',
+            'upgrade_mode' => (string) (
+                $data['upgrade_mode']
+                ?? 'sequential'
+            ),
+            'step_count' => 0,
+            'current_step' => 0,
+            'steps' => [],
+            'message' => '当前已是最新版本',
             'data' => $data
         ];
     }
 
-    $targetVersion =
-        trim(
-            (string) (
-                $release['version']
-            )
-        );
-
-    if (
-        $targetVersion === ''
-        || !update_valid_version(
-            $targetVersion
-        )
-    ) {
+    if (!update_valid_version($targetVersion)) {
         return [
             'success' => false,
             'available' => false,
-            'message' =>
-                '升级中心返回了无效版本号'
+            'message' => '升级中心返回了无效版本号'
         ];
     }
 
@@ -529,26 +508,50 @@ function update_check(): array
         return [
             'success' => true,
             'available' => false,
-            'message' =>
-                '当前已是最新版本',
-            'release' => $release
+            'upgrade_mode' => (string) (
+                $data['upgrade_mode']
+                ?? 'sequential'
+            ),
+            'step_count' => 0,
+            'current_step' => 0,
+            'steps' => [],
+            'message' => '当前已是最新版本',
+            'release' => $release,
+            'data' => $data
         ];
     }
+
+    $stepCount = (int) (
+        $data['step_count']
+        ?? count($steps)
+    );
+
+    $currentStep = (int) (
+        $data['current_step']
+        ?? 1
+    );
 
     return [
         'success' => true,
         'available' => true,
-        'message' =>
-            '发现新版本',
-        'current_version' =>
-            $currentVersion,
-        'release' => $release
+        'message' => '发现新版本',
+        'current_version' => $currentVersion,
+        'latest_version' => (string) (
+            $data['latest_version']
+            ?? $targetVersion
+        ),
+        'upgrade_mode' => (string) (
+            $data['upgrade_mode']
+            ?? 'sequential'
+        ),
+        'step_count' => $stepCount,
+        'current_step' => $currentStep,
+        'steps' => $steps,
+        'release' => $release,
+        'data' => $data
     ];
 }
 
-/**
- * 验证版本号
- */
 function update_valid_version(
     string $version
 ): bool {
@@ -2162,24 +2165,6 @@ function update_write_version(
         ];
     }
 
-    $backupFile =
-        $configFile
-        . '.version.bak';
-
-    if (
-        !is_file($backupFile)
-        && !@copy(
-            $configFile,
-            $backupFile
-        )
-    ) {
-        return [
-            'success' => false,
-            'message' =>
-                '无法创建 config.php 版本备份'
-        ];
-    }
-
     $tempFile =
         $configFile
         . '.version.tmp';
@@ -2229,7 +2214,7 @@ function update_write_version(
         );
 
     $verifyPattern =
-        "/(['\"]version['\"]\\s*=>\\s*)(['\"])([^'\"]*)(['\"])/";
+        "/(['\"]version['\"]\s*=>\s*)(['\"])([^'\"]*)(['\"])/";
 
     if (
         $verifyContent === false
@@ -2241,40 +2226,13 @@ function update_write_version(
         || !isset($verifyMatches[3])
         || $verifyMatches[3] !== $version
     ) {
-        @copy(
-            $backupFile,
-            $configFile
-        );
-
         @unlink($tempFile);
 
         return [
             'success' => false,
             'message' =>
-                '版本写入验证失败，已恢复 config.php'
+                '版本写入验证失败，请检查 config.php'
         ];
-    }
-
-    $backupContent =
-        @file_get_contents(
-            $backupFile
-        );
-
-    if ($backupContent !== false) {
-        $backupPattern =
-            "/(['\"]version['\"]\\s*=>\\s*)(['\"])([^'\"]*)(['\"])/";
-
-        if (
-            preg_match(
-                $backupPattern,
-                $backupContent,
-                $backupMatches
-            )
-            && isset($backupMatches[3])
-            && $backupMatches[3] !== $version
-        ) {
-            @unlink($backupFile);
-        }
     }
 
     return [
@@ -2561,6 +2519,37 @@ function update_install_execute(
         ];
     }
 
+    $minFromVersion = trim(
+        (string) (
+            $release['min_from_version']
+            ?? ''
+        )
+    );
+
+    if ($minFromVersion !== '') {
+        if (!update_valid_version($minFromVersion)) {
+            return [
+                'success' => false,
+                'message' =>
+                    '升级中心返回了无效的最低支持版本'
+            ];
+        }
+
+        if (
+            update_compare_versions(
+                $currentVersion,
+                $minFromVersion
+            ) < 0
+        ) {
+            return [
+                'success' => false,
+                'message' =>
+                    '当前版本低于该版本要求的最低支持版本: '
+                    . $minFromVersion
+            ];
+        }
+    }
+
     if (
         update_compare_versions(
             $targetVersion,
@@ -2640,31 +2629,10 @@ function update_install_execute(
         '升级包安全检查通过'
     );
 
-    $backup =
-        update_backup_current_site(
-            $siteRoot,
-            $currentVersion
-        );
-
-    if (
-        !$backup['success']
-    ) {
-        return [
-            'success' => false,
-            'message' =>
-                $backup['message']
-                ?? '备份失败'
-        ];
-    }
-
-    $backupPath =
-        (string) (
-            $backup['path']
-            ?? ''
-        );
+    $backupPath = '';
 
     update_log(
-        '当前版本备份完成'
+        '升级按无备份模式执行'
     );
 
     $tempRoot =
@@ -2795,37 +2763,6 @@ function update_install_execute(
             '升级失败: '
             . $e->getMessage()
         );
-
-        if (
-            $backupPath !== ''
-            && is_dir($backupPath)
-        ) {
-            update_log(
-                '开始恢复升级前备份'
-            );
-
-            $restore =
-                update_restore_backup(
-                    $backupPath,
-                    $siteRoot
-                );
-
-            if (
-                $restore['success']
-            ) {
-                update_log(
-                    '升级前备份恢复成功'
-                );
-            } else {
-                update_log(
-                    '升级前备份恢复失败: '
-                    . (
-                        $restore['message']
-                        ?? '未知错误'
-                    )
-                );
-            }
-        }
 
         return [
             'success' => false,
