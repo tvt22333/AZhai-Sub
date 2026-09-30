@@ -110,7 +110,7 @@ AZhai Sub 支持接入「阿宅登录」
 
 前往：
 
-https://oauth.azhai.de
+https://blog.azhai.de/oauth/apps
 
 申请 OAuth 密钥，然后将密钥填写到 `config.php` 中
 
